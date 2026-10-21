@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HARI KESIHATAN MENTAL SEDUNIA 2026 PERINGKAT NEGERI KEDAH</title>
+    <title>Sistem Cabutan Bertuah Premium</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -227,9 +227,12 @@
                 <div class="flex justify-between items-center border-b border-white/10 pb-4 mb-4">
                     <h2 class="text-lg font-semibold text-white flex items-center gap-2">
                         <i class="fas fa-users text-purple-400"></i> Senarai Peserta
+                        <button onclick="syncDariSheets()" class="ml-3 text-xs bg-white/10 hover:bg-white/20 px-2.5 py-1.5 rounded-lg transition border border-white/10" title="Tarik data dari Google Sheets">
+                            <i id="icon-sync" class="fas fa-sync-alt"></i> Sync
+                        </button>
                     </h2>
                     <span id="jumlah-peserta" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold py-1 px-3 rounded-full shadow-[0_0_10px_rgba(236,72,153,0.3)]">
-                        0 Daftar
+                        0 Menunggu
                     </span>
                 </div>
                 
@@ -244,33 +247,33 @@
 
             <!-- Panel Kanan: Arena Cabutan -->
             <div class="glass-panel lg:col-span-8 rounded-3xl p-8 flex flex-col justify-center items-center text-center relative overflow-hidden border-t border-l border-white/20">
-                
-                <!-- Lampu Sorot Belakang -->
-                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-64 bg-fuchsia-600/20 blur-[100px] rounded-full z-0 pointer-events-none"></div>
-
-                <div class="z-10 w-full flex flex-col items-center">
-                    <div class="inline-flex items-center justify-center gap-3 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-sm font-medium text-purple-300 mb-6">
-                        <i class="fas fa-star text-yellow-400"></i> Grand Lucky Draw <i class="fas fa-star text-yellow-400"></i>
-                    </div>
-                    
-                    <h2 class="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white via-gray-200 to-gray-500 mb-12 tracking-tight">
+                    <h2 class="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white via-gray-200 to-gray-500 mb-8 tracking-tight">
                         SIAPAKAH YANG <span class="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400">BERTUAH?</span>
                     </h2>
 
-                    <!-- Papan Pemenang / Slot -->
-                    <div class="w-full max-w-2xl relative mb-14 group">
-                        <!-- Border bercahaya luar -->
-                        <div class="absolute -inset-1 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 rounded-[2.5rem] blur opacity-30 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                    <!-- Papan Pemenang / Roda -->
+                    <div class="w-full max-w-2xl relative mb-14 group flex flex-col items-center">
                         
-                        <div class="relative bg-[#0b1121] ring-1 ring-white/10 rounded-[2rem] p-8 h-56 md:h-72 flex flex-col items-center justify-center overflow-hidden shadow-2xl">
+                        <!-- Roda Impian (Wheel) -->
+                        <div class="relative w-full flex justify-center mb-8 scale-90 md:scale-100">
+                            <!-- Penunjuk (Pointer Arrow) -->
+                            <div class="absolute -top-6 left-1/2 -translate-x-1/2 z-20">
+                                <i class="fas fa-caret-down text-6xl text-yellow-400 drop-shadow-[0_4px_10px_rgba(250,204,21,0.6)]"></i>
+                            </div>
+                            <!-- Canvas Roda -->
+                            <canvas id="roda-cabutan" width="400" height="400" class="rounded-full shadow-[0_0_50px_rgba(236,72,153,0.2)] border-4 border-white/20 bg-[#0b1121] transition-transform duration-300"></canvas>
+                        </div>
+
+                        <!-- Keputusan (Result Bawah Roda) -->
+                        <div class="relative bg-[#0b1121] ring-1 ring-white/10 rounded-[2rem] p-6 w-full max-w-lg flex flex-col items-center justify-center overflow-hidden shadow-2xl">
                             <!-- Refleksi kaca di dalam papan -->
                             <div class="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/5 to-transparent rounded-t-[2rem] pointer-events-none"></div>
                             
                             <div class="flex flex-col items-center justify-center w-full z-10">
-                                <div id="paparan-nombor-cabut" class="text-5xl md:text-6xl font-mono font-black text-yellow-400 mb-4 drop-shadow-[0_0_15px_rgba(250,204,21,0.6)] transition-all duration-300 tracking-wider">
+                                <div id="paparan-nombor-cabut" class="text-3xl md:text-4xl font-mono font-black text-yellow-400 mb-2 drop-shadow-[0_0_15px_rgba(250,204,21,0.6)] transition-all duration-300 tracking-wider">
                                     #----
                                 </div>
-                                <div id="paparan-pemenang" class="slot-machine transition-all duration-300 w-full px-4 truncate">
+                                <div id="paparan-pemenang" class="text-3xl md:text-4xl font-bold uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 transition-all duration-300 w-full px-4 truncate text-center drop-shadow-md">
                                     SEDIA
                                 </div>
                             </div>
@@ -355,6 +358,9 @@
         let pusinganInterval = null;
         let bunyiTikInterval = null;
 
+        // 👇 LETAK URL GOOGLE SHEETS ANDA DI SINI 👇
+        const GOOGLE_SHEETS_URL = "https://docs.google.com/spreadsheets/d/1nhnJB7r1c2LeToeV0AvEKEXt90VmHRmPla-X_bHKbWg/edit?gid=0#gid=0"; // TUKAR URL INI
+
         // --- Inisialisasi ---
         window.onload = async () => {
             // Mula sambungan ke Cloud jika wujud (Cegah Crash / Queue Management)
@@ -409,6 +415,9 @@
                 
                 btnParticipant.classList.remove(...classAktif);
                 btnParticipant.classList.add(...classPasif);
+
+                // Tarik data secara automatik apabila Admin buka tab ini
+                syncDariSheets();
             } else {
                 vParticipant.classList.remove('hidden');
                 vAdmin.classList.add('hidden');
@@ -453,6 +462,49 @@
             document.getElementById('input-admin-password').value = '';
         };
 
+        // --- Tarik Data Dari Sheets ---
+        window.syncDariSheets = async function() {
+            const iconSync = document.getElementById('icon-sync');
+            if(iconSync) iconSync.classList.add('fa-spin');
+            
+            try {
+                // Pastikan GOOGLE_SHEETS_URL adalah URL anda yang betul
+                const response = await fetch(GOOGLE_SHEETS_URL, { redirect: "follow" });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (Array.isArray(data)) {
+                    window.peserta = data;
+                    kemaskiniPaparanAdmin();
+                    // Papar mesej berjaya supaya admin tahu data dah masuk
+                    tunjukModal("Berjaya Sync", `Sistem berjaya menarik ${data.length} rekod peserta dari Google Sheets.`, "fa-check-circle", "text-emerald-400");
+                } else {
+                    throw new Error("Format data tidak sah (Bukan Array).");
+                }
+            } catch (error) {
+                console.error("Gagal tarik data dari Sheets:", error);
+                
+                // Mesej amaran yang jelas jika berlaku ralat CORS / Failed to fetch
+                let ralatMesej = error.message;
+                if (ralatMesej.includes("Failed to fetch")) {
+                    ralatMesej = "Ralat CORS (Failed to fetch). Sila pastikan di Apps Script:<br><br>1. <b>Who has access:</b> Anyone<br>2. Anda telah tekan <b>New version</b> semasa Deploy.";
+                }
+                
+                tunjukModal(
+                    "Gagal Sync Data", 
+                    ralatMesej, 
+                    "fa-exclamation-triangle", 
+                    "text-red-400"
+                );
+            }
+            
+            if(iconSync) iconSync.classList.remove('fa-spin');
+        };
+
         // --- Pendaftaran Peserta (Dengan Sistem Beratur / Queue & Anti-Spam) ---
         window.handleRegistration = async function(e) {
             e.preventDefault();
@@ -468,9 +520,12 @@
             const telefon = document.getElementById('input-telefon').value.trim();
 
             if (nama && telefon) {
-                const idPeserta = Math.floor(1000 + Math.random() * 9000);
+                // Jana nombor mengikut turutan pendaftaran (001, 002, 003...)
+                const nextNum = window.peserta.length + 1;
+                const idPeserta = String(nextNum).padStart(3, '0');
+                
                 const dataPeserta = {
-                    id: idPeserta,
+                    id: String(idPeserta).padStart(3, '0'),
                     nama: nama,
                     telefon: telefon,
                     timestamp: Date.now() // Timestamp untuk susunan beratur (Queueing)
@@ -479,10 +534,7 @@
                 // ==========================================
                 // HANTAR DATA KE GOOGLE SHEETS
                 // ==========================================
-                const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxAA_ViSeoUol8q0xcU8DVVr3937n3rLxXdCllKtFzhU0U2UFpCCcuuY1eSzbla00DT9w/exec"; // Pastikan ini URL anda
-                
                 try {
-                    // KEMASKINI: Guna URLSearchParams yang lebih stabil untuk Google Apps Script
                     const formParams = new URLSearchParams();
                     formParams.append('id', dataPeserta.id);
                     formParams.append('nama', dataPeserta.nama);
@@ -526,12 +578,9 @@
                 msg.classList.remove('hidden');
                 msg.classList.add('fade-in');
                 document.getElementById('form-daftar').reset();
-
-                // Sorok selepas 6 saat
-                setTimeout(() => {
-                    msg.classList.add('hidden');
-                    msg.classList.remove('fade-in');
-                }, 6000);
+                
+                // Mesej kejayaan kini dibiarkan kekal (tiada had masa)
+                // supaya peserta tidak terlepas pandang untuk screenshot.
             }
 
             // 3. Buka Semula Butang untuk pengguna seterusnya (jika share telefon)
@@ -543,9 +592,16 @@
         // --- Kemaskini Skrin Admin (Dengan DOM Limiter Anti-Crash) ---
         function kemaskiniPaparanAdmin() {
             const bekasSenarai = document.getElementById('senarai-peserta');
-            document.getElementById('jumlah-peserta').innerText = `${window.peserta.length} Daftar`;
+            
+            // TAPISAN BARU: Buang nama yang dah dicabut secara fizikal dari senarai
+            const senaraiBelumMenang = window.peserta.filter(p => !window.pemenangID.includes(p.id));
+            
+            document.getElementById('jumlah-peserta').innerText = `${senaraiBelumMenang.length} Menunggu`;
+            
+            // LUKIS SEMULA RODA BILA ADA PERUBAHAN DATA
+            lukisRoda(senaraiBelumMenang);
 
-            if (window.peserta.length === 0) {
+            if (senaraiBelumMenang.length === 0) {
                 bekasSenarai.innerHTML = `
                     <div class="flex flex-col items-center justify-center h-full text-gray-500 space-y-4 opacity-50">
                         <i class="fas fa-user-astronaut text-4xl"></i>
@@ -556,28 +612,28 @@
 
             bekasSenarai.innerHTML = '';
             // Papar dari yang terkini (teratas)
-            const pesertaTerbalik = [...window.peserta].reverse();
+            const pesertaTerbalik = [...senaraiBelumMenang].reverse();
             
             // Limit render jika terlalu ramai (Elak browser admin lag/crash jika cecah ribuan serentak)
             const renderLimit = 100; 
             const paparanPeserta = pesertaTerbalik.slice(0, renderLimit);
 
             paparanPeserta.forEach((p, index) => {
-                const isWinner = window.pemenangID.includes(p.id);
                 const div = document.createElement('div');
-                div.className = `transition-colors p-3.5 rounded-2xl border flex items-center justify-between fade-in group ${isWinner ? 'bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 border-yellow-500/50' : 'bg-white/5 hover:bg-white/10 border-white/5'}`;
+                // Semua baris menjadi gaya biasa kerana pemenang telah dipadam dari senarai ini
+                div.className = `transition-colors p-3.5 rounded-2xl border flex items-center justify-between fade-in group bg-white/5 hover:bg-white/10 border-white/5`;
                 div.style.animationDelay = `${(index % 10) * 0.05}s`;
                 div.innerHTML = `
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full ${isWinner ? 'bg-yellow-500/20 border-yellow-400 text-yellow-300' : 'bg-gradient-to-br from-gray-700 to-gray-900 border-white/10 text-gray-300'} flex items-center justify-center font-bold border transition-colors">
-                            ${isWinner ? '<i class="fas fa-trophy text-sm"></i>' : p.nama.charAt(0).toUpperCase()}
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 border-white/10 text-gray-300 flex items-center justify-center font-bold border transition-colors">
+                            ${p.nama.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                            <p class="font-bold ${isWinner ? 'text-yellow-400' : 'text-gray-200'} text-sm truncate max-w-[150px]" title="${p.nama}">${p.nama}</p>
-                            <p class="text-xs ${isWinner ? 'text-yellow-500/70' : 'text-gray-500'} font-mono">${p.telefon}</p>
+                            <p class="font-bold text-gray-200 text-sm truncate max-w-[150px]" title="${p.nama}">${p.nama}</p>
+                            <p class="text-xs text-gray-500 font-mono">${p.telefon}</p>
                         </div>
                     </div>
-                    <div class="${isWinner ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' : 'bg-black/30 text-purple-300 border-purple-500/20'} font-mono text-xs px-2.5 py-1.5 rounded-lg border">
+                    <div class="bg-black/30 text-purple-300 border-purple-500/20 font-mono text-xs px-2.5 py-1.5 rounded-lg border">
                         #${p.id}
                     </div>
                 `;
@@ -593,9 +649,96 @@
             }
         }
 
-        // --- Logik Cabutan (Slot Machine Effect) ---
+        // --- Logik Roda Impian (Wheel of Fortune) ---
+        window.wheelAngle = 0;
+        let wheelVelocity = 0;
+        let wheelReqId = null;
+        const wheelColors = ['#ec4899', '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+
+        function lukisRoda(senarai) {
+            const canvas = document.getElementById('roda-cabutan');
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(centerX, centerY) - 10;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Jika tiada peserta
+            if(senarai.length === 0) {
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                ctx.fillStyle = '#1e293b'; 
+                ctx.fill();
+                ctx.lineWidth = 5;
+                ctx.strokeStyle = '#334155';
+                ctx.stroke();
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = 'bold 24px Poppins';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('KOSONG', centerX, centerY);
+                return;
+            }
+
+            const arc = (2 * Math.PI) / senarai.length;
+
+            for(let i = 0; i < senarai.length; i++) {
+                const angle = window.wheelAngle + i * arc;
+                
+                // Lukis Potongan Roda (Slice)
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, angle, angle + arc, false);
+                ctx.lineTo(centerX, centerY);
+                ctx.fillStyle = wheelColors[i % wheelColors.length];
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#0f172a';
+                ctx.stroke();
+
+                // Lukis Teks (Nama/ID)
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(angle + arc / 2);
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#ffffff';
+                
+                // Ubah saiz font mengikut kesesakan roda
+                if(senarai.length > 50) {
+                    ctx.font = 'bold 10px Poppins';
+                } else {
+                    ctx.font = 'bold 14px Poppins';
+                }
+                
+                // Hadkan panjang nama jika terlalu panjang
+                let text = senarai[i].nama;
+                if(text.length > 12) text = text.substring(0, 12) + '..';
+                
+                // Tulis ID dan Nama
+                ctx.fillText(`#${senarai[i].id} ${text}`, radius - 20, 0);
+                ctx.restore();
+            }
+
+            // Lukis Bulatan Emas di Tengah
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 25, 0, 2 * Math.PI);
+            ctx.fillStyle = '#1e293b';
+            ctx.fill();
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = '#facc15';
+            ctx.stroke();
+            
+            // Titik tengah
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 8, 0, 2 * Math.PI);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+        }
+
+        // --- Logik Mula Cabutan Roda ---
         window.mulakanCabutan = function() {
-            // Tapis peserta supaya hanya yang belum menang dimasukkan ke dalam pusingan
             const senaraiLayak = window.peserta.filter(p => !window.pemenangID.includes(p.id));
 
             if (senaraiLayak.length === 0) {
@@ -607,7 +750,7 @@
             window.sedangCabut = true;
             
             const butangCabut = document.getElementById('btn-cabut');
-            butangCabut.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Memilih...`;
+            butangCabut.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Roda Berpusing...`;
             butangCabut.classList.replace('from-blue-500', 'from-gray-500');
             butangCabut.classList.replace('to-cyan-500', 'to-gray-600');
             butangCabut.classList.add('opacity-70', 'cursor-not-allowed', 'pointer-events-none');
@@ -615,57 +758,53 @@
             const paparan = document.getElementById('paparan-pemenang');
             const paparanNombor = document.getElementById('paparan-nombor-cabut');
             
-            paparan.style.transform = "scale(1.05)";
-            paparan.style.filter = "blur(1px)";
-            paparan.style.opacity = "0.8";
-            paparan.classList.remove('animate-pulse-glow');
-            
-            paparanNombor.style.transform = "scale(1.05)";
-            paparanNombor.style.filter = "blur(1px)";
+            paparan.innerText = "MENCARI...";
+            paparan.classList.remove('animate-pulse-glow', 'from-facc15', 'to-38bdf8');
+            paparan.classList.add('from-white', 'to-gray-400');
+            paparanNombor.innerText = "#----";
             paparanNombor.classList.remove('animate-pulse-glow');
             
-            let pusingan = 0;
-            const masaMaksimum = 3500; // 3.5 saat
-            let kelajuan = 40; 
+            // Tetapkan kelajuan rawak (antara 0.3 hingga 0.6 radian per frame)
+            wheelVelocity = Math.random() * 0.3 + 0.3; 
+            
+            function animateWheel() {
+                window.wheelAngle += wheelVelocity;
+                // Geseran (Friction) memperlahankan roda
+                wheelVelocity *= 0.985; 
+                
+                lukisRoda(senaraiLayak);
 
-            // Ambil dari senaraiLayak (mereka yang belum menang sahaja)
-            const pesertaRawak = () => senaraiLayak[Math.floor(Math.random() * senaraiLayak.length)];
-
-            function putar() {
-                const p = pesertaRawak();
-                paparan.innerText = p.nama;
-                paparanNombor.innerText = `#${p.id}`;
-                pusingan += kelajuan;
-
-                if (pusingan > masaMaksimum * 0.6) kelajuan = 100;
-                if (pusingan > masaMaksimum * 0.8) kelajuan = 250;
-
-                if (pusingan >= masaMaksimum) {
-                    berhentiCabutan(paparan, paparanNombor, butangCabut, senaraiLayak);
+                // Berhenti putar bila kelajuan terlalu perlahan
+                if (wheelVelocity > 0.0015) {
+                    wheelReqId = requestAnimationFrame(animateWheel);
                 } else {
-                    pusinganInterval = setTimeout(putar, kelajuan);
+                    cancelAnimationFrame(wheelReqId);
+                    
+                    // Kira siapa pemenang berdasarkan di mana roda berhenti (pointer di posisi ATAS / 270 darjah)
+                    const arc = (2 * Math.PI) / senaraiLayak.length;
+                    // Formula mencari sudut tepat (offset dari 1.5 PI)
+                    let offset = (1.5 * Math.PI - window.wheelAngle) % (2 * Math.PI);
+                    if (offset < 0) offset += 2 * Math.PI; // Normalize sudut negatif
+                    
+                    const indexPemenang = Math.floor(offset / arc) % senaraiLayak.length;
+                    const pemenang = senaraiLayak[indexPemenang];
+                    
+                    berhentiCabutan(paparan, paparanNombor, butangCabut, pemenang);
                 }
             }
             
-            putar();
+            animateWheel();
         };
 
-        function berhentiCabutan(paparan, paparanNombor, butangCabut, senaraiLayak) {
-            clearTimeout(pusinganInterval);
-            
-            const indeksPemenang = Math.floor(Math.random() * senaraiLayak.length);
-            const pemenang = senaraiLayak[indeksPemenang];
-            
+        function berhentiCabutan(paparan, paparanNombor, butangCabut, pemenang) {
             // Rekod ID Pemenang supaya tidak bergulir (rolling) lagi
             window.pemenangID.push(pemenang.id);
             
-            paparan.style.filter = "none";
-            paparan.style.transform = "scale(1)";
-            paparan.style.opacity = "1";
+            // Papar Keputusan di Kotak Bawah Roda
             paparan.innerText = pemenang.nama;
-            paparan.classList.add('animate-pulse-glow');
+            paparan.classList.remove('from-white', 'to-gray-400');
+            paparan.classList.add('animate-pulse-glow', 'from-facc15', 'to-38bdf8'); // Warna Emas/Cyan
             
-            paparanNombor.style.filter = "none";
             paparanNombor.style.transform = "scale(1.15)";
             paparanNombor.innerText = `#${pemenang.id}`;
             paparanNombor.classList.add('animate-pulse-glow');
@@ -676,7 +815,7 @@
             butangCabut.classList.replace('to-gray-600', 'to-cyan-500');
             butangCabut.classList.remove('opacity-70', 'cursor-not-allowed', 'pointer-events-none');
 
-            kemaskiniPaparanAdmin(); // Kemaskini list di kiri supaya nampak kesan emas
+            kemaskiniPaparanAdmin(); // Buang nama dari senarai dan lukis semula roda
             firePremiumConfetti();
         }
 
@@ -686,11 +825,16 @@
             const paparanNombor = document.getElementById('paparan-nombor-cabut');
             
             paparan.innerText = "SEDIA";
-            paparan.classList.remove('animate-pulse-glow');
+            paparan.classList.remove('animate-pulse-glow', 'from-facc15', 'to-38bdf8');
+            paparan.classList.add('from-white', 'to-gray-400');
             
             paparanNombor.innerText = "#----";
             paparanNombor.style.transform = "scale(1)";
             paparanNombor.classList.remove('animate-pulse-glow');
+            
+            window.wheelAngle = 0;
+            const senaraiBelumMenang = window.peserta.filter(p => !window.pemenangID.includes(p.id));
+            lukisRoda(senaraiBelumMenang);
         };
 
         // --- Kesan Konfeti Premium ---
