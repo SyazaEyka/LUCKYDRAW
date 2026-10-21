@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cabutan Bertuah</title>
+    <title>Sistem Cabutan Bertuah</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -862,6 +862,36 @@
             fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
             fire(0.1, { spread: 120, startVelocity: 45 });
         }
+
+        // --- Logik Full Screen ---
+        window.toggleFullScreen = function() {
+            const elem = document.documentElement; // Ambil keseluruhan mukasurat web
+            const btnIcon = document.querySelector('#btn-fullscreen i');
+            
+            if (!document.fullscreenElement) {
+                // Masuk Full Screen
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) { /* Safari */
+                    elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { /* IE11 */
+                    elem.msRequestFullscreen();
+                }
+                btnIcon.classList.remove('fa-expand');
+                btnIcon.classList.add('fa-compress'); // Tukar ikon kuncup
+            } else {
+                // Keluar Full Screen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) { /* Safari */
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { /* IE11 */
+                    document.msExitFullscreen();
+                }
+                btnIcon.classList.remove('fa-compress');
+                btnIcon.classList.add('fa-expand'); // Tukar ikon kembang
+            }
+        };
 
         // --- Modul Alert Kustom Tema Gelap ---
         window.tunjukModal = function(tajuk, mesej, icon = "fa-info-circle", iconColor = "text-blue-400") {
