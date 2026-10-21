@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Cabutan Bertuah</title>
+    <title>Cabutan Bertuah</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -230,6 +230,9 @@
                         <button onclick="syncDariSheets()" class="ml-3 text-xs bg-white/10 hover:bg-white/20 px-2.5 py-1.5 rounded-lg transition border border-white/10" title="Tarik data dari Google Sheets">
                             <i id="icon-sync" class="fas fa-sync-alt"></i> Sync
                         </button>
+                        <button id="btn-toggle-status" onclick="tukarStatusPenyertaan()" class="ml-2 text-xs bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 px-3 py-1.5 rounded-lg transition border border-emerald-500/30 font-bold tracking-wider" title="Tutup/Buka Penyertaan">
+                            <i class="fas fa-door-open"></i> DIBUKA
+                        </button>
                     </h2>
                     <span id="jumlah-peserta" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold py-1 px-3 rounded-full shadow-[0_0_10px_rgba(236,72,153,0.3)]">
                         0 Menunggu
@@ -355,11 +358,49 @@
         window.peserta = [];
         window.sedangCabut = false;
         window.pemenangID = []; // Simpan ID pemenang supaya tak berulang
+        window.statusPenyertaanSemasa = "BUKA";
         let pusinganInterval = null;
         let bunyiTikInterval = null;
 
         // 👇 LETAK URL GOOGLE SHEETS ANDA DI SINI 👇
         const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxAA_ViSeoUol8q0xcU8DVVr3937n3rLxXdCllKtFzhU0U2UFpCCcuuY1eSzbla00DT9w/exec"; // TUKAR URL INI
+
+        // --- Logik Buka / Tutup Penyertaan ---
+        window.tukarStatusPenyertaan = async function() {
+            const statusBaru = window.statusPenyertaanSemasa === "BUKA" ? "TUTUP" : "BUKA";
+            const btn = document.getElementById('btn-toggle-status');
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>...`;
+
+            try {
+                const formParams = new URLSearchParams();
+                formParams.append('action', 'tukar_status');
+                formParams.append('status', statusBaru);
+
+                const response = await fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formParams });
+                const result = await response.json();
+                
+                if (result.status === "success") {
+                    kemaskiniButangStatus(result.penyertaan);
+                }
+            } catch (err) {
+                alert("Gagal tukar status. Sila pastikan Apps Script telah di-update (New Version).");
+                kemaskiniButangStatus(window.statusPenyertaanSemasa);
+            }
+        };
+
+        window.kemaskiniButangStatus = function(status) {
+            window.statusPenyertaanSemasa = status;
+            const btn = document.getElementById('btn-toggle-status');
+            if(btn) {
+                if (status === "BUKA") {
+                    btn.className = "ml-2 text-xs bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 px-3 py-1.5 rounded-lg transition border border-emerald-500/30 font-bold tracking-wider";
+                    btn.innerHTML = `<i class="fas fa-door-open"></i> DIBUKA`;
+                } else {
+                    btn.className = "ml-2 text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 px-3 py-1.5 rounded-lg transition border border-red-500/30 font-bold tracking-wider";
+                    btn.innerHTML = `<i class="fas fa-door-closed"></i> DITUTUP`;
+                }
+            }
+        };
 
         // --- Inisialisasi ---
         window.onload = async () => {
@@ -468,7 +509,6 @@
             if(iconSync) iconSync.classList.add('fa-spin');
             
             try {
-                // Pastikan GOOGLE_SHEETS_URL adalah URL anda yang betul
                 const response = await fetch(GOOGLE_SHEETS_URL, { redirect: "follow" });
                 
                 if (!response.ok) {
@@ -477,13 +517,15 @@
                 
                 const data = await response.json();
                 
-                if (Array.isArray(data)) {
-                    window.peserta = data;
+                // Susunan JSON baharu dari pelayan yang mengandungi senarai dan status
+                if (data && data.senarai) {
+                    window.peserta = data.senarai;
                     kemaskiniPaparanAdmin();
-                    // Papar mesej berjaya supaya admin tahu data dah masuk
-                    tunjukModal("Berjaya Sync", `Sistem berjaya menarik ${data.length} rekod peserta dari Google Sheets.`, "fa-check-circle", "text-emerald-400");
+                    kemaskiniButangStatus(data.statusPenyertaan); // Update butang status
+                    
+                    tunjukModal("Berjaya Sync", `Sistem berjaya menarik ${data.senarai.length} rekod peserta dari Google Sheets.`, "fa-check-circle", "text-emerald-400");
                 } else {
-                    throw new Error("Format data tidak sah (Bukan Array).");
+                    throw new Error("Format data tidak sah (Sila pastikan anda buat New Version di Apps Script).");
                 }
             } catch (error) {
                 console.error("Gagal tarik data dari Sheets:", error);
@@ -534,14 +576,14 @@
                     const result = await response.json();
 
                     if (result.status === "success") {
-                        // Papar nombor rasmi yang diberikan oleh Google Sheets!
                         document.getElementById('paparan-nombor-peserta').innerText = `#${result.id}`;
-
-                        // Papar mesej berjaya
                         const msg = document.getElementById('mesej-berjaya');
                         msg.classList.remove('hidden');
                         msg.classList.add('fade-in');
                         document.getElementById('form-daftar').reset();
+                    } else if (result.status === "ditutup") {
+                        // Papar notis amaran jika admin sudah tutup penyertaan
+                        tunjukModal("Penyertaan Ditutup", result.message, "fa-lock", "text-red-400");
                     } else {
                         throw new Error(result.message || "Ralat tidak diketahui");
                     }
