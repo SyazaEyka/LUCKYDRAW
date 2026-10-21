@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Cabutan Bertuah Premium</title>
+    <title>Sistem Cabutan Bertuah</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -520,67 +520,35 @@
             const telefon = document.getElementById('input-telefon').value.trim();
 
             if (nama && telefon) {
-                // Jana nombor mengikut turutan pendaftaran (001, 002, 003...)
-                const nextNum = window.peserta.length + 1;
-                const idPeserta = String(nextNum).padStart(3, '0');
-                
-                const dataPeserta = {
-                    id: String(idPeserta).padStart(3, '0'),
-                    nama: nama,
-                    telefon: telefon,
-                    timestamp: Date.now() // Timestamp untuk susunan beratur (Queueing)
-                };
-
-                // ==========================================
-                // HANTAR DATA KE GOOGLE SHEETS
-                // ==========================================
                 try {
                     const formParams = new URLSearchParams();
-                    formParams.append('id', dataPeserta.id);
-                    formParams.append('nama', dataPeserta.nama);
-                    formParams.append('telefon', dataPeserta.telefon);
+                    formParams.append('nama', nama);
+                    formParams.append('telefon', telefon);
 
-                    // Hantar dengan mode: 'no-cors'
-                    fetch(GOOGLE_SHEETS_URL, {
+                    // Buang 'no-cors' supaya kita boleh baca nombor yang Google Sheets berikan
+                    const response = await fetch(GOOGLE_SHEETS_URL, {
                         method: 'POST',
-                        mode: 'no-cors',
                         body: formParams
-                    }).then(() => {
-                        console.log("Data berjaya dihantar ke Sheets (status disorok oleh no-cors)");
-                    }).catch(err => {
-                        console.error("Ralat ke Google Sheets:", err);
                     });
-                } catch (err) {
-                    console.error("Gagal sediakan data ke Sheets:", err);
-                }
-                // ==========================================
 
-                // 2. Simpan ke Cloud (Jika Live) atau Lokal (Jika offline)
-                if (isSistemCloud && auth.currentUser) {
-                    try {
-                        await addDoc(pesertaRef, dataPeserta);
-                        // Tidak perlu kemaskini lokal sebab onSnapshot akan buatkannya dari Cloud
-                    } catch (error) {
-                        console.error("Gagal simpan ke cloud:", error);
-                        window.peserta.push(dataPeserta);
-                        kemaskiniPaparanAdmin();
+                    const result = await response.json();
+
+                    if (result.status === "success") {
+                        // Papar nombor rasmi yang diberikan oleh Google Sheets!
+                        document.getElementById('paparan-nombor-peserta').innerText = `#${result.id}`;
+
+                        // Papar mesej berjaya
+                        const msg = document.getElementById('mesej-berjaya');
+                        msg.classList.remove('hidden');
+                        msg.classList.add('fade-in');
+                        document.getElementById('form-daftar').reset();
+                    } else {
+                        throw new Error(result.message || "Ralat tidak diketahui");
                     }
-                } else {
-                    window.peserta.push(dataPeserta);
-                    kemaskiniPaparanAdmin();
+                } catch (err) {
+                    console.error("Gagal daftar:", err);
+                    alert("Ralat semasa pendaftaran: " + err.message + "\nSila pastikan anda telah buat 'New version' pada Apps Script.");
                 }
-
-                // Update text nombor cabutan di skrin peserta
-                document.getElementById('paparan-nombor-peserta').innerText = `#${idPeserta}`;
-
-                // Papar mesej berjaya
-                const msg = document.getElementById('mesej-berjaya');
-                msg.classList.remove('hidden');
-                msg.classList.add('fade-in');
-                document.getElementById('form-daftar').reset();
-                
-                // Mesej kejayaan kini dibiarkan kekal (tiada had masa)
-                // supaya peserta tidak terlepas pandang untuk screenshot.
             }
 
             // 3. Buka Semula Butang untuk pengguna seterusnya (jika share telefon)
