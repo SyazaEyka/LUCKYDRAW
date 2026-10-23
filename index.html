@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Cabutan Bertuah</title>
+    <title>Cabutan Bertuah</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -90,24 +90,6 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        /* Typography Teks Mesin Cabutan */
-        .slot-machine {
-            font-size: 3.5rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            background: linear-gradient(to right, #facc15, #f472b6, #38bdf8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-align: center;
-            line-height: 1.2;
-            text-shadow: 0 0 30px rgba(250, 204, 21, 0.2);
-        }
-        
-        @media (max-width: 640px) {
-            .slot-machine { font-size: 2rem; letter-spacing: 2px; }
-        }
-
         /* Scrollbar Tersuai Gelap */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 10px; }
@@ -156,14 +138,26 @@
             100% { transform: translate(var(--end-x), 120vh) rotate(var(--rotation)); opacity: 0; }
         }
 
-        /* Fix untuk Full Screen Arena */
+        /* CSS KHAS UNTUK SKRIN PENUH ARENA SAHAJA */
         #arena-cabutan:fullscreen {
-            background-color: #0f172a; /* Warna background gelap bila full screen */
+            background-color: #0f172a;
             padding: 2rem;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            border: none !important;
+            border-radius: 0 !important;
+        }
+        #arena-cabutan:-webkit-full-screen {
+            background-color: #0f172a;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: none !important;
+            border-radius: 0 !important;
         }
     </style>
 </head>
@@ -179,7 +173,6 @@
     <!-- Banner / Logo Program -->
     <div class="w-full max-w-4xl mx-auto mb-6 px-4 z-10 relative fade-in">
         <div class="glass-panel rounded-2xl p-2 sm:p-4 shadow-2xl flex justify-center items-center">
-             <!-- Kita gunakan placeholder sementara dengan saiz yang sesuai memandangkan URL imej sebenar perlu diganti kelak -->
             <img src="backdrop.png" alt="Logo Sambutan Hari Kesihatan Mental Sedunia" class="max-h-32 md:max-h-40 w-auto object-contain rounded-xl drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
         </div>
     </div>
@@ -249,7 +242,6 @@
 
     <!-- PANDANGAN ADMIN -->
     <div id="view-admin" class="w-full max-w-7xl mx-auto hidden z-10">
-        <!-- Buang h-[80vh] dan gunakan min-h supaya tak terpotong -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 h-auto min-h-[85vh]">
             
             <!-- Panel Kiri: Senarai Peserta & QR -->
@@ -272,11 +264,14 @@
                 </div>
                 
                 <!-- Senarai Scroll -->
-            <div id="senarai-peserta" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 mb-6 pr-2">
-                <div class="flex flex-col items-center justify-center h-full text-gray-500 space-y-4 opacity-50">
-                    <i class="fas fa-user-astronaut text-4xl"></i>
-                    <p class="text-sm italic">Menunggu peserta...</p>
+                <div id="senarai-peserta" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 mb-6 pr-2">
+                    <div class="flex flex-col items-center justify-center h-full text-gray-500 space-y-4 opacity-50">
+                        <i class="fas fa-user-astronaut text-4xl"></i>
+                        <p class="text-sm italic">Menunggu peserta...</p>
+                    </div>
                 </div>
+            </div>
+
             <!-- Panel Kanan: Arena Cabutan -->
             <div id="arena-cabutan" class="glass-panel lg:col-span-8 rounded-3xl p-8 flex flex-col justify-center items-center text-center relative overflow-hidden border-t border-l border-white/20">
                     
@@ -296,7 +291,6 @@
                     <div class="w-full max-w-2xl relative mb-14 group flex flex-col items-center z-10">
                         
                         <!-- Roda Impian (Wheel) -->
-                        <!-- Tambah transform scale supaya roda kecil sikit di skrin laptop -->
                         <div class="relative w-full flex justify-center mb-6 scale-75 sm:scale-90 md:scale-100 origin-top">
                             <!-- Penunjuk (Pointer Arrow) -->
                             <div class="absolute -top-6 left-1/2 -translate-x-1/2 z-20">
@@ -374,7 +368,7 @@
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- Konfigurasi Cloud Database (Untuk elak sistem crash bila ramai scan) ---
+        // --- Konfigurasi Cloud Database ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'sistem-cabutan-live';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
         
@@ -398,8 +392,9 @@
         window.sedangCabut = false;
         window.pemenangID = []; // Simpan ID pemenang supaya tak berulang
         window.statusPenyertaanSemasa = "BUKA";
-        let pusinganInterval = null;
-        let bunyiTikInterval = null;
+        let wheelVelocity = 0;
+        let wheelReqId = null;
+        window.wheelAngle = 0;
 
         // --- Fungsi Daun Gugur ---
         function binaDaunGugur() {
@@ -428,7 +423,7 @@
                 
                 // Draw leaf using SVG directly in CSS
                 const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${color}"><path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8,20C19,20 22,3 22,3C21,5 14,5.25 9,6.25C4,7.25 7,11.5 7,11.5C7,11.5 12,6 17,8Z"/></svg>`;
-                daun.style.backgroundImage = `('data:image/svg+xml;utf8,${svg}')`;
+                daun.style.backgroundImage = `url('data:image/svg+xml;utf8,${svg}')`;
                 
                 container.appendChild(daun);
             }
@@ -478,22 +473,18 @@
         window.onload = async () => {
             binaDaunGugur(); // Mulakan efek daun gugur animasi
 
-            // Mula sambungan ke Cloud jika wujud (Cegah Crash / Queue Management)
             if (isSistemCloud) {
                 try {
                     const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
                     if (token) await signInWithCustomToken(auth, token);
                     else await signInAnonymously(auth);
 
-                    // Ambil data secara LIVE dari Cloud dan masukkan ke dalam giliran memori
                     onSnapshot(pesertaRef, (snapshot) => {
                         window.peserta = [];
                         snapshot.forEach(doc => window.peserta.push(doc.data()));
-                        // Susun ikut masa (Queue time) supaya data tidak bercelaru
                         window.peserta.sort((a, b) => a.timestamp - b.timestamp);
                         kemaskiniPaparanAdmin();
                     }, (error) => console.error("Ralat bacaan data live:", error));
-                    
                 } catch (e) {
                     console.error("Sistem Cloud gagal, bertukar ke mod Offline", e);
                     isSistemCloud = false;
@@ -513,15 +504,13 @@
             const classPasif = ['text-gray-300', 'hover:text-white', 'hover:bg-white/5'];
 
             if (view === 'admin') {
-                // Periksa jika admin belum log masuk
                 if (!isAdminUnlocked) {
                     modalKatalaluan.classList.remove('hidden');
                     modalKatalaluan.classList.add('flex');
                     setTimeout(() => document.getElementById('input-admin-password').focus(), 100);
-                    return; // Hentikan pertukaran paparan sehingga disahkan
+                    return; 
                 }
                 
-                // Jika sudah unlock, papar skrin admin
                 vAdmin.classList.remove('hidden');
                 vParticipant.classList.add('hidden');
                 
@@ -531,7 +520,6 @@
                 btnParticipant.classList.remove(...classAktif);
                 btnParticipant.classList.add(...classPasif);
 
-                // Tarik data secara automatik apabila Admin buka tab ini
                 syncDariSheets();
             } else {
                 vParticipant.classList.remove('hidden');
@@ -545,22 +533,18 @@
             }
         };
 
-        // --- Fungsi Modal Kata Laluan ---
         window.semakKatalaluan = function(e) {
             e.preventDefault();
             const inputKatalaluan = document.getElementById('input-admin-password').value;
             const msgRalat = document.getElementById('password-error');
 
             if (inputKatalaluan === ADMIN_PASSWORD) {
-                // Kata laluan betul
                 isAdminUnlocked = true;
                 msgRalat.classList.add('hidden');
                 tutupModalKatalaluan();
-                switchView('admin'); // Teruskan pertukaran ke skrin admin
+                switchView('admin'); 
             } else {
-                // Kata laluan salah
                 msgRalat.classList.remove('hidden');
-                // Kesan getaran sikit (shake) pada input
                 const inputField = document.getElementById('input-admin-password');
                 inputField.classList.add('border-red-500');
                 setTimeout(() => {
@@ -591,45 +575,34 @@
                 
                 const data = await response.json();
                 
-                // Susunan JSON baharu dari pelayan yang mengandungi senarai dan status
                 if (data && data.senarai) {
                     window.peserta = data.senarai;
                     kemaskiniPaparanAdmin();
-                    kemaskiniButangStatus(data.statusPenyertaan); // Update butang status
-                    
+                    kemaskiniButangStatus(data.statusPenyertaan);
                     tunjukModal("Berjaya Sync", `Sistem berjaya menarik ${data.senarai.length} rekod peserta dari Google Sheets.`, "fa-check-circle", "text-emerald-400");
                 } else {
                     throw new Error("Format data tidak sah (Sila pastikan anda buat New Version di Apps Script).");
                 }
             } catch (error) {
                 console.error("Gagal tarik data dari Sheets:", error);
-                
-                // Mesej amaran yang jelas jika berlaku ralat CORS / Failed to fetch
                 let ralatMesej = error.message;
                 if (ralatMesej.includes("Failed to fetch")) {
                     ralatMesej = "Ralat CORS (Failed to fetch). Sila pastikan di Apps Script:<br><br>1. <b>Who has access:</b> Anyone<br>2. Anda telah tekan <b>New version</b> semasa Deploy.";
                 }
-                
-                tunjukModal(
-                    "Gagal Sync Data", 
-                    ralatMesej, 
-                    "fa-exclamation-triangle", 
-                    "text-red-400"
-                );
+                tunjukModal("Gagal Sync Data", ralatMesej, "fa-exclamation-triangle", "text-red-400");
             }
             
             if(iconSync) iconSync.classList.remove('fa-spin');
         };
 
-        // --- Pendaftaran Peserta (Dengan Sistem Beratur / Queue & Anti-Spam) ---
+        // --- Pendaftaran Peserta (Dengan Sistem Kunci) ---
         window.handleRegistration = async function(e) {
             e.preventDefault();
             const btnSubmit = document.querySelector('button[type="submit"]');
             const teksAsalButang = btnSubmit.innerHTML;
             
-            // 1. Kunci Butang (Elak Spam klik / Crash dari client)
             btnSubmit.disabled = true;
-            btnSubmit.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyimpan ke Giliran...`;
+            btnSubmit.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyimpan...`;
             btnSubmit.classList.add('opacity-70', 'cursor-not-allowed');
 
             const nama = document.getElementById('input-nama').value.trim();
@@ -641,7 +614,6 @@
                     formParams.append('nama', nama);
                     formParams.append('telefon', telefon);
 
-                    // Buang 'no-cors' supaya kita boleh baca nombor yang Google Sheets berikan
                     const response = await fetch(GOOGLE_SHEETS_URL, {
                         method: 'POST',
                         body: formParams
@@ -656,33 +628,27 @@
                         msg.classList.add('fade-in');
                         document.getElementById('form-daftar').reset();
                     } else if (result.status === "ditutup") {
-                        // Papar notis amaran jika admin sudah tutup penyertaan
                         tunjukModal("Penyertaan Ditutup", result.message, "fa-lock", "text-red-400");
                     } else {
                         throw new Error(result.message || "Ralat tidak diketahui");
                     }
                 } catch (err) {
                     console.error("Gagal daftar:", err);
-                    alert("Ralat semasa pendaftaran: " + err.message + "\nSila pastikan anda telah buat 'New version' pada Apps Script.");
+                    alert("Ralat semasa pendaftaran: " + err.message);
                 }
             }
 
-            // 3. Buka Semula Butang untuk pengguna seterusnya (jika share telefon)
             btnSubmit.disabled = false;
             btnSubmit.innerHTML = teksAsalButang;
             btnSubmit.classList.remove('opacity-70', 'cursor-not-allowed');
         };
 
-        // --- Kemaskini Skrin Admin (Dengan DOM Limiter Anti-Crash) ---
+        // --- Kemaskini Skrin Admin ---
         function kemaskiniPaparanAdmin() {
             const bekasSenarai = document.getElementById('senarai-peserta');
-            
-            // TAPISAN BARU: Buang nama yang dah dicabut secara fizikal dari senarai
             const senaraiBelumMenang = window.peserta.filter(p => !window.pemenangID.includes(p.id));
             
             document.getElementById('jumlah-peserta').innerText = `${senaraiBelumMenang.length} Menunggu`;
-            
-            // LUKIS SEMULA RODA BILA ADA PERUBAHAN DATA
             lukisRoda(senaraiBelumMenang);
 
             if (senaraiBelumMenang.length === 0) {
@@ -695,16 +661,12 @@
             }
 
             bekasSenarai.innerHTML = '';
-            // Papar dari yang terkini (teratas)
             const pesertaTerbalik = [...senaraiBelumMenang].reverse();
-            
-            // Limit render jika terlalu ramai (Elak browser admin lag/crash jika cecah ribuan serentak)
             const renderLimit = 100; 
             const paparanPeserta = pesertaTerbalik.slice(0, renderLimit);
 
             paparanPeserta.forEach((p, index) => {
                 const div = document.createElement('div');
-                // Semua baris menjadi gaya biasa kerana pemenang telah dipadam dari senarai ini
                 div.className = `transition-colors p-3.5 rounded-2xl border flex items-center justify-between fade-in group bg-white/5 hover:bg-white/10 border-white/5`;
                 div.style.animationDelay = `${(index % 10) * 0.05}s`;
                 div.innerHTML = `
@@ -724,7 +686,6 @@
                 bekasSenarai.appendChild(div);
             });
 
-            // Tunjuk status lebihan jika melebihi had (Performance safety)
             if(pesertaTerbalik.length > renderLimit) {
                 const lebih = document.createElement('div');
                 lebih.className = "text-center text-xs text-fuchsia-400 mt-3 mb-2 font-semibold";
@@ -734,9 +695,6 @@
         }
 
         // --- Logik Roda Impian (Wheel of Fortune) ---
-        window.wheelAngle = 0;
-        let wheelVelocity = 0;
-        let wheelReqId = null;
         const wheelColors = ['#ec4899', '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 
         function lukisRoda(senarai) {
@@ -749,7 +707,6 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Jika tiada peserta
             if(senarai.length === 0) {
                 ctx.beginPath();
                 ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
@@ -771,7 +728,6 @@
             for(let i = 0; i < senarai.length; i++) {
                 const angle = window.wheelAngle + i * arc;
                 
-                // Lukis Potongan Roda (Slice)
                 ctx.beginPath();
                 ctx.arc(centerX, centerY, radius, angle, angle + arc, false);
                 ctx.lineTo(centerX, centerY);
@@ -781,7 +737,6 @@
                 ctx.strokeStyle = '#0f172a';
                 ctx.stroke();
 
-                // Lukis Teks (Nama/ID)
                 ctx.save();
                 ctx.translate(centerX, centerY);
                 ctx.rotate(angle + arc / 2);
@@ -789,23 +744,19 @@
                 ctx.textBaseline = 'middle';
                 ctx.fillStyle = '#ffffff';
                 
-                // Ubah saiz font mengikut kesesakan roda
                 if(senarai.length > 50) {
                     ctx.font = 'bold 10px Poppins';
                 } else {
                     ctx.font = 'bold 14px Poppins';
                 }
                 
-                // Hadkan panjang nama jika terlalu panjang
                 let text = senarai[i].nama;
                 if(text.length > 12) text = text.substring(0, 12) + '..';
                 
-                // Tulis ID dan Nama
                 ctx.fillText(`#${senarai[i].id} ${text}`, radius - 20, 0);
                 ctx.restore();
             }
 
-            // Lukis Bulatan Emas di Tengah
             ctx.beginPath();
             ctx.arc(centerX, centerY, 25, 0, 2 * Math.PI);
             ctx.fillStyle = '#1e293b';
@@ -814,7 +765,6 @@
             ctx.strokeStyle = '#facc15';
             ctx.stroke();
             
-            // Titik tengah
             ctx.beginPath();
             ctx.arc(centerX, centerY, 8, 0, 2 * Math.PI);
             ctx.fillStyle = '#ffffff';
@@ -848,27 +798,22 @@
             paparanNombor.innerText = "#----";
             paparanNombor.classList.remove('animate-pulse-glow');
             
-            // Tetapkan kelajuan rawak (antara 0.3 hingga 0.6 radian per frame)
             wheelVelocity = Math.random() * 0.3 + 0.3; 
             
             function animateWheel() {
                 window.wheelAngle += wheelVelocity;
-                // Geseran (Friction) memperlahankan roda
                 wheelVelocity *= 0.985; 
                 
                 lukisRoda(senaraiLayak);
 
-                // Berhenti putar bila kelajuan terlalu perlahan
                 if (wheelVelocity > 0.0015) {
                     wheelReqId = requestAnimationFrame(animateWheel);
                 } else {
                     cancelAnimationFrame(wheelReqId);
                     
-                    // Kira siapa pemenang berdasarkan di mana roda berhenti (pointer di posisi ATAS / 270 darjah)
                     const arc = (2 * Math.PI) / senaraiLayak.length;
-                    // Formula mencari sudut tepat (offset dari 1.5 PI)
                     let offset = (1.5 * Math.PI - window.wheelAngle) % (2 * Math.PI);
-                    if (offset < 0) offset += 2 * Math.PI; // Normalize sudut negatif
+                    if (offset < 0) offset += 2 * Math.PI;
                     
                     const indexPemenang = Math.floor(offset / arc) % senaraiLayak.length;
                     const pemenang = senaraiLayak[indexPemenang];
@@ -881,13 +826,11 @@
         };
 
         function berhentiCabutan(paparan, paparanNombor, butangCabut, pemenang) {
-            // Rekod ID Pemenang supaya tidak bergulir (rolling) lagi
             window.pemenangID.push(pemenang.id);
             
-            // Papar Keputusan di Kotak Bawah Roda
             paparan.innerText = pemenang.nama;
             paparan.classList.remove('from-white', 'to-gray-400');
-            paparan.classList.add('animate-pulse-glow', 'from-yellow-400', 'to-cyan-400'); // Tukar kepada class warna Tailwind yang betul
+            paparan.classList.add('animate-pulse-glow', 'from-yellow-400', 'to-cyan-400');
             
             paparanNombor.style.transform = "scale(1.15)";
             paparanNombor.innerText = `#${pemenang.id}`;
@@ -899,7 +842,7 @@
             butangCabut.classList.replace('to-gray-600', 'to-cyan-500');
             butangCabut.classList.remove('opacity-70', 'cursor-not-allowed', 'pointer-events-none');
 
-            kemaskiniPaparanAdmin(); // Buang nama dari senarai dan lukis semula roda
+            kemaskiniPaparanAdmin();
             firePremiumConfetti();
         }
 
@@ -937,21 +880,19 @@
             fire(0.1, { spread: 120, startVelocity: 45 });
         }
 
-        // --- Logik Full Screen (Hanya Untuk Roda Cabutan) ---
+        // --- Logik Full Screen untuk Kotak Cabutan Sahaja ---
         window.toggleFullScreen = function() {
-            const arena = document.getElementById('arena-cabutan'); // Fokus pada kotak ini saja
+            const elem = document.getElementById('arena-cabutan');
             
             if (!document.fullscreenElement) {
-                // Masuk Full Screen
-                if (arena.requestFullscreen) {
-                    arena.requestFullscreen();
-                } else if (arena.webkitRequestFullscreen) { /* Safari */
-                    arena.webkitRequestFullscreen();
-                } else if (arena.msRequestFullscreen) { /* IE11 */
-                    arena.msRequestFullscreen();
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) { /* Safari */
+                    elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { /* IE11 */
+                    elem.msRequestFullscreen();
                 }
             } else {
-                // Keluar Full Screen
                 if (document.exitFullscreen) {
                     document.exitFullscreen();
                 } else if (document.webkitExitFullscreen) { /* Safari */
@@ -962,22 +903,16 @@
             }
         };
 
-        // Tukar ikon butang bila masuk/keluar full screen (termasuk kalau tekan ESC)
-        document.addEventListener('fullscreenchange', ubahIkonFullScreen);
-        document.addEventListener('webkitfullscreenchange', ubahIkonFullScreen);
-        
-        function ubahIkonFullScreen() {
+        document.addEventListener('fullscreenchange', (event) => {
             const btnIcon = document.querySelector('#btn-fullscreen i');
-            if(btnIcon) {
-                if (document.fullscreenElement) {
-                    btnIcon.classList.remove('fa-expand');
-                    btnIcon.classList.add('fa-compress');
-                } else {
-                    btnIcon.classList.remove('fa-compress');
-                    btnIcon.classList.add('fa-expand');
-                }
+            if (document.fullscreenElement) {
+                btnIcon.classList.remove('fa-expand');
+                btnIcon.classList.add('fa-compress'); 
+            } else {
+                btnIcon.classList.remove('fa-compress');
+                btnIcon.classList.add('fa-expand'); 
             }
-        }
+        });
 
         // --- Modul Alert Kustom Tema Gelap ---
         window.tunjukModal = function(tajuk, mesej, icon = "fa-info-circle", iconColor = "text-blue-400") {
