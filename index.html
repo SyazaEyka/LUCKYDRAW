@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Cabutan Bertuah </title>
+    <title>Cabutan Bertuah</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -90,24 +90,6 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        /* Typography Teks Mesin Cabutan */
-        .slot-machine {
-            font-size: 3.5rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            background: linear-gradient(to right, #facc15, #f472b6, #38bdf8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-align: center;
-            line-height: 1.2;
-            text-shadow: 0 0 30px rgba(250, 204, 21, 0.2);
-        }
-        
-        @media (max-width: 640px) {
-            .slot-machine { font-size: 2rem; letter-spacing: 2px; }
-        }
-
         /* Scrollbar Tersuai Gelap */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 10px; }
@@ -134,6 +116,26 @@
             from { opacity: 0; transform: translateY(15px) scale(0.98); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
+
+        /* CSS KHAS UNTUK SKRIN PENUH ARENA SAHAJA */
+        #arena-cabutan:fullscreen {
+            background-color: #0f172a;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border: none !important;
+            border-radius: 0 !important;
+        }
+        #arena-cabutan:-webkit-full-screen {
+            background-color: #0f172a;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border: none !important;
+            border-radius: 0 !important;
+        }
     </style>
 </head>
 <body class="p-4 md:p-8 flex flex-col items-center min-h-screen relative">
@@ -148,7 +150,7 @@
     <!-- Banner / Logo Program -->
     <div class="w-full max-w-4xl mx-auto mb-6 px-4 z-10 relative fade-in">
         <div class="glass-panel rounded-2xl p-2 sm:p-4 shadow-2xl flex justify-center items-center">
-             <!-- Kita gunakan placeholder sementara dengan saiz yang sesuai memandangkan URL imej sebenar perlu diganti kelak -->
+             <!-- Logo akan terpapar jika imej ada di folder yang sama -->
             <img src="backdrop.jpeg" alt="Logo Sambutan Hari Kesihatan Mental Sedunia" class="max-h-32 md:max-h-40 w-auto object-contain rounded-xl drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
         </div>
     </div>
@@ -217,12 +219,11 @@
     </div>
 
     <!-- PANDANGAN ADMIN -->
-    <div id="view-admin" class="w-full max-w-7xl mx-auto hidden z-10">
-        <!-- Buang h-[80vh] dan gunakan min-h supaya tak terpotong -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 h-auto min-h-[85vh]">
+    <div id="view-admin" class="w-full max-w-6xl mx-auto hidden z-10">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 h-auto lg:h-[80vh]">
             
             <!-- Panel Kiri: Senarai Peserta & QR -->
-            <div class="glass-panel p-6 rounded-3xl lg:col-span-4 flex flex-col h-[600px] lg:h-auto relative overflow-hidden border-t border-l border-white/20">
+            <div class="glass-panel p-6 rounded-3xl lg:col-span-4 flex flex-col h-[600px] lg:h-full relative overflow-hidden border-t border-l border-white/20">
                 
                 <!-- Tajuk Senarai -->
                 <div class="flex justify-between items-center border-b border-white/10 pb-4 mb-4">
@@ -250,24 +251,23 @@
             </div>
 
             <!-- Panel Kanan: Arena Cabutan -->
-            <!-- Buang overflow-hidden di sini supaya tulisan tak terpotong -->
-            <div class="glass-panel lg:col-span-8 rounded-3xl p-6 md:p-10 flex flex-col justify-center items-center text-center relative border-t border-l border-white/20">
+            <!-- TAMBAH ID "arena-cabutan" DI SINI -->
+            <div id="arena-cabutan" class="glass-panel lg:col-span-8 rounded-3xl p-8 flex flex-col justify-center items-center text-center relative border-t border-l border-white/20">
                     
                     <!-- Butang Full Screen (Ditambah di Penjuru Atas Kanan Arena) -->
                     <button onclick="toggleFullScreen()" id="btn-fullscreen" class="absolute top-6 right-6 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 p-3.5 rounded-xl transition border border-white/10 z-30 shadow-lg" title="Skrin Penuh">
                         <i class="fas fa-expand text-xl"></i>
                     </button>
 
-                    <h2 class="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white via-gray-200 to-gray-500 mb-6 md:mb-10 tracking-tight mt-10 md:mt-0">
+                    <h2 class="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white via-gray-200 to-gray-500 mb-8 tracking-tight mt-6 md:mt-0">
                         SIAPAKAH YANG <span class="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400">BERTUAH?</span>
                     </h2>
 
                     <!-- Papan Pemenang / Roda -->
-                    <div class="w-full max-w-2xl relative mb-10 group flex flex-col items-center">
+                    <div class="w-full max-w-2xl relative mb-14 group flex flex-col items-center">
                         
                         <!-- Roda Impian (Wheel) -->
-                        <!-- Tambah transform scale supaya roda kecil sikit di skrin laptop -->
-                        <div class="relative w-full flex justify-center mb-6 scale-75 sm:scale-90 md:scale-100 origin-top">
+                        <div class="relative w-full flex justify-center mb-8 scale-90 md:scale-100">
                             <!-- Penunjuk (Pointer Arrow) -->
                             <div class="absolute -top-6 left-1/2 -translate-x-1/2 z-20">
                                 <i class="fas fa-caret-down text-6xl text-yellow-400 drop-shadow-[0_4px_10px_rgba(250,204,21,0.6)]"></i>
@@ -277,7 +277,7 @@
                         </div>
 
                         <!-- Keputusan (Result Bawah Roda) -->
-                        <div class="relative bg-[#0b1121] ring-1 ring-white/10 rounded-[2rem] p-6 w-full max-w-lg flex flex-col items-center justify-center overflow-hidden shadow-2xl z-10 -mt-4 sm:-mt-0">
+                        <div class="relative bg-[#0b1121] ring-1 ring-white/10 rounded-[2rem] p-6 w-full max-w-lg flex flex-col items-center justify-center overflow-hidden shadow-2xl">
                             <!-- Refleksi kaca di dalam papan -->
                             <div class="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/5 to-transparent rounded-t-[2rem] pointer-events-none"></div>
                             
@@ -372,7 +372,7 @@
         let bunyiTikInterval = null;
 
         // 👇 LETAK URL GOOGLE SHEETS ANDA DI SINI 👇
-        const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxAA_ViSeoUol8q0xcU8DVVr3937n3rLxXdCllKtFzhU0U2UFpCCcuuY1eSzbla00DT9w/exec"; // TUKAR URL INI
+        const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxAA_ViSeoUol8q0xcU8DVVr3937n3rLxXdCllKtFzhU0U2UFpCCcuuY1eSzbla00DT9w/exec";
 
         // --- Logik Buka / Tutup Penyertaan ---
         window.tukarStatusPenyertaan = async function() {
@@ -822,7 +822,7 @@
             // Papar Keputusan di Kotak Bawah Roda
             paparan.innerText = pemenang.nama;
             paparan.classList.remove('from-white', 'to-gray-400');
-            paparan.classList.add('animate-pulse-glow', 'from-yellow-400', 'to-cyan-400'); // Tukar kepada class warna Tailwind yang betul
+            paparan.classList.add('animate-pulse-glow', 'from-yellow-400', 'to-cyan-400'); 
             
             paparanNombor.style.transform = "scale(1.15)";
             paparanNombor.innerText = `#${pemenang.id}`;
@@ -872,10 +872,9 @@
             fire(0.1, { spread: 120, startVelocity: 45 });
         }
 
-        // --- Logik Full Screen ---
+        // --- Logik Full Screen untuk Kotak Cabutan Sahaja ---
         window.toggleFullScreen = function() {
-            const elem = document.documentElement; // Ambil keseluruhan mukasurat web
-            const btnIcon = document.querySelector('#btn-fullscreen i');
+            const elem = document.getElementById('arena-cabutan');
             
             if (!document.fullscreenElement) {
                 // Masuk Full Screen
@@ -886,8 +885,6 @@
                 } else if (elem.msRequestFullscreen) { /* IE11 */
                     elem.msRequestFullscreen();
                 }
-                btnIcon.classList.remove('fa-expand');
-                btnIcon.classList.add('fa-compress'); // Tukar ikon kuncup
             } else {
                 // Keluar Full Screen
                 if (document.exitFullscreen) {
@@ -897,10 +894,20 @@
                 } else if (document.msExitFullscreen) { /* IE11 */
                     document.msExitFullscreen();
                 }
-                btnIcon.classList.remove('fa-compress');
-                btnIcon.classList.add('fa-expand'); // Tukar ikon kembang
             }
         };
+
+        // Event Listener untuk tukar ikon butang bila masuk/keluar Full Screen (walaupun tekan ESC)
+        document.addEventListener('fullscreenchange', (event) => {
+            const btnIcon = document.querySelector('#btn-fullscreen i');
+            if (document.fullscreenElement) {
+                btnIcon.classList.remove('fa-expand');
+                btnIcon.classList.add('fa-compress'); // Ikon kuncup
+            } else {
+                btnIcon.classList.remove('fa-compress');
+                btnIcon.classList.add('fa-expand'); // Ikon kembang
+            }
+        });
 
         // --- Modul Alert Kustom Tema Gelap ---
         window.tunjukModal = function(tajuk, mesej, icon = "fa-info-circle", iconColor = "text-blue-400") {
